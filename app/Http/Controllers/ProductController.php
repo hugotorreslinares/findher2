@@ -39,7 +39,17 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         if($request->ajax()) {
-            $product = new Product($request->all());
+            $validatedData = $request->validate([
+                'latitude' => 'nullable|string',
+                'longitude' => 'nullable|string',
+                'text' => 'nullable|string',
+                'description' => 'nullable|string',
+                'url' => 'nullable|string',
+                'category_id' => 'nullable|integer',
+                'image' => 'nullable|string',
+            ]);
+
+            $product = new Product($validatedData);
             $product->user_id = Auth::user()->id;
             $product->save();
         }

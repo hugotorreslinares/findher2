@@ -28,10 +28,18 @@ class UserController extends Controller
     }
     public function newCategory(Request $request){
         Debugbar::info($request);
+        $validatedData = $request->validate([
+            'id' => 'nullable|integer',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string|max:255',
+            'image' => 'nullable|string',
+            'icon' => 'nullable|string',
+        ]);
+
         try {
             $category = Category::updateOrCreate(
                 ['id' => $request->id],
-                $request->all()
+                $validatedData
             );
         } catch (\Throwable $th) {
             throw $th;
@@ -110,6 +118,10 @@ class UserController extends Controller
         Storage::disk($disk)->delete($folder.$filename);
     }
     public function upload(Request  $request){
+     $request->validate([
+         'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+     ]);
+
      $uploadedFile = $request->file('image');
      $filename = time().$uploadedFile->getClientOriginalName();
 
@@ -128,10 +140,29 @@ class UserController extends Controller
     public function store(Request $request)
     {
         if($request->ajax()) {
-            $profileData =$request->all();
+            $validatedData = $request->validate([
+                'id' => 'nullable|integer',
+                'latitude' => 'nullable|string',
+                'longitude' => 'nullable|string',
+                'text' => 'nullable|string',
+                'description' => 'nullable|string',
+                'url_instagram' => 'nullable|string',
+                'url' => 'nullable|string',
+                'category_id' => 'nullable|integer',
+                'phone_number' => 'nullable|string',
+                'whatsapp' => 'nullable|string',
+                'tarifa' => 'nullable|string',
+                'horario' => 'nullable|string',
+                'servicios' => 'nullable|string',
+                'tags' => 'nullable|string',
+                'rating' => 'nullable|integer',
+                'gender' => 'nullable|string',
+                'image.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048'
+            ]);
+
             $uploadedFiles = $request->file('image');
             $user =Auth::user();
-            $profile =Profile::findOrFail(Auth::user()->id);
+            $profile =Profile::where('user_id', $user->id)->firstOrFail();
             $oldFiles = (array)(json_decode($profile->image)===null?[]:json_decode($profile->image));
             $fileNames=$oldFiles;
             $i=0;
@@ -152,21 +183,22 @@ class UserController extends Controller
                 $i++;
             }
             Debugbar::info($i);
-            $profileData =$request->all();
-            unset($profileData['user-id']);
+
+            $profileData = $validatedData;
+            $profileData['user_id'] = $user->id;
+
             $today = date("Y-m-d");
-            $diff = date_diff(date_create(Auth::user()->bday), date_create($today));
+            $diff = date_diff(date_create($user->bday), date_create($today));
 
             $profileData['age']=$diff->format('%y');
             if($uploadedFiles)
-            $profileData['image']=$fileNames;
+            $profileData['image']=json_encode($fileNames);
 
             $profile = Profile::updateOrCreate(
-                ['id' => $request->id],
+                ['user_id' => $user->id],
                 $profileData
             );
 
-            $profile->save();
             if(isset($usrImage)){
                 $user->foto =$usrImage;
                 $user->save();

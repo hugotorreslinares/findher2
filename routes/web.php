@@ -20,11 +20,12 @@ Route::get('/', 'PrehomeController@prehome')->name('prehome');
 Route::get('/welcome', 'WelcomController@index');
 
 
-Route::get('/admin', 'UserController@admin')->name('admin');
-
-Route::get('/admin/users', 'UserController@users')->name('admin.users');
-Route::get('/admin/categories', 'UserController@categories')->name('admin.categories');
-Route::post('/admin/categories/new', 'UserController@newCategory')->name('admin.newCategory');
+Route::middleware(['auth', 'is_admin'])->group(function () {
+    Route::get('/admin', 'UserController@admin')->name('admin');
+    Route::get('/admin/users', 'UserController@users')->name('admin.users');
+    Route::get('/admin/categories', 'UserController@categories')->name('admin.categories');
+    Route::post('/admin/categories/new', 'UserController@newCategory')->name('admin.newCategory');
+});
 
 Route::get('/categories', 'CategoryController@index')->name('category');
 
